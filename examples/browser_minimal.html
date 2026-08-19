@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<!--
+  The smallest possible browser consumer. Open this file directly (file:// works)
+  while a bridge is running on 127.0.0.1:8765.
+
+  For the full monitor -- sparklines, latency charts, dark mode -- run
+  `mt5-ws-stream dashboard` instead.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>mt5-ws-stream — minimal client</title>
+<style>
+  body { font: 15px/1.6 system-ui, sans-serif; margin: 2rem; max-width: 44rem; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: .4rem .6rem; border-bottom: 1px solid #e5e5e5; }
+  th:first-child, td:first-child { text-align: left; }
+  th { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: #666; }
+  #status { font-size: .85rem; color: #666; }
+</style>
+</head>
+<body>
+  <h1>mt5-ws-stream</h1>
+  <p id="status">connecting…</p>
+  <table>
+    <thead><tr><th>Symbol</th><th>Bid</th><th>Ask</th><th>Spread</th><th>Ticks</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+<script>
+const state = new Map();
+const ws = new WebSocket("ws://127.0.0.1:8765/ws");
+
+ws.onopen = () => { document.getElementById("status").textContent = "connected"; };
+ws.onclose = () => { document.getElementById("status").textContent = "disconnected"; };
+
+ws.onmessage = (event) => {
+  const frame = JSON.parse(event.data);
+  const ticks = frame.t === "ticks" ? frame.d : frame.t === "hello" ? frame.snapshot : null;
+  if (!ticks) return;
+
+  for (const d of ticks) {
+    const row = state.get(d.s) ?? { count: 0 };
+    Object.assign(row, { bid: d.b, ask: d.a, count: row.count + 1 });
+    state.set(d.s, row);
+  }
+  render();
+};
+
+function render() {
+  document.getElementById("rows").innerHTML = [...state.entries()]
+    .sort()
+    .map(([symbol, r]) => {
+      const digits = r.bid >= 1000 ? 2 : r.bid >= 50 ? 3 : 5;
+      return `<tr><td>${symbol}</td><td>${r.bid.toFixed(digits)}</td>` +
+             `<td>${r.ask.toFixed(digits)}</td>` +
+             `<td>${(r.ask - r.bid).toFixed(digits)}</td>` +
+             `<td>${r.count.toLocaleString()}</td></tr>`;
+    })
+    .join("");
+}
+</script>
+</body>
+</html>

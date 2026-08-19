@@ -1,0 +1,177 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mt5-ws-stream"
+version = "0.1.0"
+description = "Low-latency MetaTrader 5 tick streaming over WebSocket"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+authors = [{ name = "komo" }]
+keywords = [
+  "metatrader",
+  "metatrader5",
+  "mt5",
+  "mql5",
+  "websocket",
+  "trading",
+  "market-data",
+  "tick-data",
+  "forex",
+  "low-latency",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Financial and Insurance Industry",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Office/Business :: Financial :: Investment",
+  "Topic :: System :: Networking",
+  "Typing :: Typed",
+]
+dependencies = [
+  # The client, and uvicorn's "websockets-sansio" server protocol.
+  "websockets>=13.0",
+  "fastapi>=0.115",
+  # 0.35 is the first release shipping WebSocketsSansIOProtocol ("websockets-sansio").
+  # Older uvicorn only offers the legacy websockets protocol, which imports
+  # websockets.legacy and warns on websockets >= 14.
+  "uvicorn>=0.35",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.27",
+  "mypy>=1.11",
+  "pytest>=8.0",
+  "pytest-asyncio>=0.24",
+  "pytest-cov>=5.0",
+  "ruff>=0.6",
+]
+
+[project.scripts]
+mt5-ws-stream = "mt5_ws_stream.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/komo135/mt5-ws-stream"
+Documentation = "https://github.com/komo135/mt5-ws-stream#readme"
+Repository = "https://github.com/komo135/mt5-ws-stream"
+Issues = "https://github.com/komo135/mt5-ws-stream/issues"
+Changelog = "https://github.com/komo135/mt5-ws-stream/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mt5_ws_stream"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src",
+  "/tests",
+  "/docs",
+  "/examples",
+  "/benchmarks",
+  "/mql5",
+  "/README.md",
+  "/README.ja.md",
+  "/CHANGELOG.md",
+  "/LICENSE",
+]
+
+# --------------------------------------------------------------------------
+# Testing
+# --------------------------------------------------------------------------
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-ra --strict-markers --strict-config"
+filterwarnings = ["error", "ignore::DeprecationWarning:websockets.*"]
+markers = [
+  "slow: takes more than a second; deselect with -m 'not slow'",
+]
+
+[tool.coverage.run]
+source = ["mt5_ws_stream"]
+branch = true
+
+[tool.coverage.report]
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "@overload",
+  "\\.\\.\\.",
+]
+
+# --------------------------------------------------------------------------
+# Linting & formatting
+# --------------------------------------------------------------------------
+[tool.ruff]
+line-length = 96
+extend-exclude = [".claude"]
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+  "A",    # builtin shadowing
+  "ASYNC",# async pitfalls
+  "B",    # bugbear
+  "C4",   # comprehensions
+  "E",    # pycodestyle errors
+  "F",    # pyflakes
+  "I",    # import sorting
+  "N",    # naming
+  "PERF", # performance anti-patterns
+  "PIE",
+  "PT",   # pytest style
+  "RET",
+  "RUF",
+  "SIM",
+  "SLF",  # private member access
+  "T20",  # print()
+  "TID",
+  "UP",   # pyupgrade
+  "W",
+]
+ignore = [
+  "B008",   # function call in default argument -- intentional in argparse wiring
+  "SIM105", # contextlib.suppress is used where it reads better
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/mt5_ws_stream/cli.py" = ["T20"]      # a CLI is allowed to print
+"benchmarks/*" = ["T20"]
+# T20: the rig narrates a live run as it goes.
+# ASYNC109: the frame-read helpers take `timeout=` so every wait in a live
+# verification is bounded by default; an unbounded one would hang a sweep.
+"benchmarks/live/*" = ["T20", "ASYNC109"]
+"examples/*" = ["T20", "INP001"]
+# SLF001: tests may poke at internals.
+# ASYNC109: the socket read helpers take `timeout=5.0` so that every call site is
+# bounded by default; wrapping each of the ~40 of them in `asyncio.timeout` would
+# be noise, and an unbounded read helper is how a regression hangs the suite.
+"tests/*" = ["SLF001", "ASYNC109"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["mt5_ws_stream"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+# --------------------------------------------------------------------------
+# Typing
+# --------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.11"
+files = ["src", "tests"]
+strict = true
+warn_unreachable = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]

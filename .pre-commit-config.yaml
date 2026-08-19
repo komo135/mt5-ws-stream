@@ -1,0 +1,42 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: end-of-file-fixer
+        exclude: \.mq5$
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: \.mq5$
+      - id: trailing-whitespace
+        exclude: \.mq5$
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.18.2
+    hooks:
+      - id: mypy
+        # The hook runs in its own venv, so every import `[tool.mypy] files`
+        # reaches has to be listed here or strict mode reports it missing:
+        # `src/` imports fastapi (which brings pydantic), uvicorn and
+        # websockets; `tests/` imports httpx and pytest. Floors mirror
+        # pyproject.toml. CI installs `.[dev]` instead and needs no list.
+        additional_dependencies:
+          [
+            fastapi>=0.115,
+            httpx>=0.27,
+            pytest>=8.0,
+            uvicorn>=0.35,
+            websockets>=13.0,
+          ]
+        pass_filenames: false
+        args: []

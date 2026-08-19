@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mt5-ws-stream — live monitor</title>
+<style>
+  .viz-root{
+    color-scheme: light;
+    --surface-0:#f4f3f0; --surface-1:#fcfcfb; --border:#e2e0da;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#7a7872;
+    --series-1:#2a78d6; --series-2:#eb6834;
+    --good:#0ca30c; --critical:#d03b3b; --warning:#fab219;
+    --grid:#eceae5;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:where(:not([data-theme="light"])) .viz-root{
+      color-scheme: dark;
+      --surface-0:#111110; --surface-1:#1a1a19; --border:#332f2c;
+      --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#8d8b80;
+      --series-1:#3987e5; --series-2:#d95926;
+      --grid:#2a2a27;
+    }
+  }
+  :root[data-theme="dark"] .viz-root{
+    color-scheme: dark;
+    --surface-0:#111110; --surface-1:#1a1a19; --border:#332f2c;
+    --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#8d8b80;
+    --series-1:#3987e5; --series-2:#d95926;
+    --grid:#2a2a27;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font:14px/1.5 ui-sans-serif,-apple-system,"Segoe UI",
+         "Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+  }
+  .viz-root{background:var(--surface-0);color:var(--text-primary);min-height:100vh;padding:20px}
+  .wrap{max-width:1160px;margin:0 auto}
+
+  header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:18px}
+  h1{font-size:17px;font-weight:650;margin:0;letter-spacing:.01em}
+  .spacer{flex:1}
+  .ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  input[type=text],select{
+    font:inherit;font-size:13px;padding:5px 9px;border-radius:7px;
+    border:1px solid var(--border);background:var(--surface-1);
+    color:var(--text-primary);
+  }
+  input[type=text]{width:230px}
+  button{
+    font:inherit;font-size:13px;padding:5px 12px;border-radius:7px;cursor:pointer;
+    border:1px solid var(--border);background:var(--surface-1);color:var(--text-primary);
+  }
+  button:hover{border-color:var(--text-muted)}
+  button.primary{background:var(--series-1);border-color:var(--series-1);color:#fff}
+
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;
+    padding:4px 10px;border-radius:999px;border:1px solid var(--border);
+    background:var(--surface-1);color:var(--text-secondary);
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted)}
+  .dot.on{background:var(--good)}
+  .dot.off{background:var(--critical)}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+  .kpi{background:var(--surface-1);border:1px solid var(--border);border-radius:11px;padding:12px 14px}
+  .kpi .lab{font-size:11px;color:var(--text-muted);letter-spacing:.04em;text-transform:uppercase}
+  .kpi .val{font-size:26px;font-weight:640;font-variant-numeric:tabular-nums;line-height:1.25;margin-top:2px}
+  .kpi .sub{font-size:11px;color:var(--text-secondary);font-variant-numeric:tabular-nums}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:10px;margin-bottom:16px}
+  .tile{background:var(--surface-1);border:1px solid var(--border);border-radius:11px;padding:12px 14px}
+  .tile .sym{font-size:13px;font-weight:640;letter-spacing:.02em}
+  .tile .row{display:flex;align-items:baseline;gap:8px;margin-top:4px}
+  .tile .px{font-size:25px;font-weight:640;font-variant-numeric:tabular-nums}
+  .tile .chg{font-size:12px;font-variant-numeric:tabular-nums;display:inline-flex;gap:3px;align-items:baseline}
+  .up{color:var(--good)} .dn{color:var(--critical)}
+  .tile .meta{display:flex;gap:14px;font-size:11.5px;color:var(--text-secondary);
+              font-variant-numeric:tabular-nums;margin-top:3px}
+  .tile canvas{display:block;width:100%;height:44px;margin-top:8px}
+
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:820px){.charts{grid-template-columns:1fr}}
+  .card{background:var(--surface-1);border:1px solid var(--border);border-radius:11px;padding:12px 14px}
+  .card h2{font-size:13px;font-weight:620;margin:0 0 2px}
+  .card .cap{font-size:11.5px;color:var(--text-muted);margin-bottom:8px}
+  .card canvas{display:block;width:100%;height:150px;cursor:crosshair}
+
+  table{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+  th,td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--grid)}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--text-muted);font-weight:560;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+  #tableCard{display:none;margin-top:16px}
+  .tip{
+    position:fixed;pointer-events:none;opacity:0;transition:opacity .08s;
+    background:var(--surface-1);border:1px solid var(--border);border-radius:8px;
+    padding:6px 9px;font-size:12px;font-variant-numeric:tabular-nums;
+    box-shadow:0 4px 14px rgba(0,0,0,.14);z-index:20;white-space:nowrap;
+  }
+  .note{font-size:12px;color:var(--text-muted);margin-top:14px;line-height:1.7}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;
+       background:var(--surface-0);padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+
+  <header>
+    <h1>mt5-ws-stream</h1>
+    <span class="pill"><span class="dot" id="dot"></span><span id="connTxt">not connected</span></span>
+    <span class="spacer"></span>
+    <div class="ctl">
+      <input type="text" id="url" value="ws://127.0.0.1:8765/ws">
+      <input type="text" id="syms" placeholder="symbol filter (blank = all)" style="width:190px">
+      <button class="primary" id="btn">Connect</button>
+      <button id="tblBtn">Show table</button>
+      <button id="thm">Theme</button>
+    </div>
+  </header>
+
+  <section class="kpis">
+    <div class="kpi"><div class="lab">Ticks / sec</div>
+      <div class="val" id="k-rate">—</div><div class="sub" id="k-total">0 total</div></div>
+    <div class="kpi"><div class="lab">Delivery latency p50</div>
+      <div class="val" id="k-lat">—</div><div class="sub">bridge &rarr; this page (ms)</div></div>
+    <div class="kpi"><div class="lab">Delivery latency p99</div>
+      <div class="val" id="k-lat99">—</div><div class="sub">bridge &rarr; this page (ms)</div></div>
+    <div class="kpi"><div class="lab">Frame efficiency</div>
+      <div class="val" id="k-batch">—</div><div class="sub">ticks per WebSocket frame</div></div>
+    <div class="kpi"><div class="lab">Gaps / drops</div>
+      <div class="val" id="k-gap">—</div><div class="sub" id="k-gapsub">sequence gaps / dropped</div></div>
+  </section>
+
+  <section class="grid" id="tiles"></section>
+
+  <section class="charts">
+    <div class="card">
+      <h2>Tick rate</h2>
+      <div class="cap">Ticks received per second, last 120 seconds</div>
+      <canvas id="cRate"></canvas>
+    </div>
+    <div class="card">
+      <h2>Delivery latency p99</h2>
+      <div class="cap">Bridge send to browser receive, p99 per second (ms)</div>
+      <canvas id="cLat"></canvas>
+    </div>
+  </section>
+
+  <div class="card" id="tableCard">
+    <h2>Latest ticks</h2>
+    <div class="cap">Same data without relying on colour</div>
+    <table><thead><tr>
+      <th>Symbol</th><th>Bid</th><th>Ask</th><th>Spread</th>
+      <th>Direction</th><th>Updates</th><th>Server time (UTC)</th>
+    </tr></thead><tbody id="tbody"></tbody></table>
+  </div>
+
+  <p class="note">
+    Start the bridge with <code>mt5-ws-stream bridge</code>.
+    This page works from <code>file://</code>. From another machine, start the
+    bridge with <code>--ws-host 0.0.0.0</code>.
+  </p>
+</div>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.querySelector('.viz-root')).getPropertyValue(n).trim();
+
+/* ---------- state ---------- */
+const MAXPTS = 120, SPARK = 90;
+let ws = null, connected = false;
+const sym = new Map();          // symbol -> {bid,ask,ms,count,hist:[],prev}
+const rateSeries = [], latSeries = [];
+let secTicks = 0, secLat = [], total = 0, frames = 0, buckets = 0;
+let statGap = 0, statDrop = 0;
+
+/* ---------- connection ---------- */
+function connect(){
+  if(ws){ ws.close(); ws = null; return; }
+  const s = $('syms').value.trim();
+  // Strip a trailing slash, then append the query directly: the bridge's router
+  // answers '/ws/' with a redirect, and a WebSocket cannot follow one.
+  // 'format=json' and 'symbols=' are the canonical spellings rendered by
+  // SubscriptionRequest.to_query() (mt5_ws_stream/subscription.py), which is
+  // also what TickStreamClient sends -- this hand-rolled query string has to
+  // keep agreeing with that one, not just with the lenient reader.
+  const base = $('url').value.trim().replace(/\/+$/,'');
+  let url = base + (base.includes('?') ? '&' : '?') + 'format=json';
+  if(s) url += '&symbols=' + encodeURIComponent(s);
+  try{ ws = new WebSocket(url); }catch(e){ alert('Invalid URL: ' + e.message); return; }
+
+  ws.onopen = () => { connected = true; buckets = 0; secLat = []; paintConn(); };
+  ws.onclose = () => { connected = false; ws = null; paintConn(); };
+  ws.onerror = () => { connected = false; paintConn(); };
+  // Frame grammar: every kind and every key below is defined once, in
+  // src/mt5_ws_stream/frames.py (docs/protocol.md §2). This reader is the
+  // browser half of it -- change a key there and change it here.
+  ws.onmessage = ev => {
+    const m = JSON.parse(ev.data);
+    if(m.t === 'ticks'){
+      frames++;
+      // Clock skew between browser and bridge can make this slightly negative.
+      secLat.push(Math.max(0, (Date.now()/1000 - m.rx) * 1000));
+      for(const d of m.d) onTick(d);
+    } else if(m.t === 'hello'){
+      for(const d of (m.snapshot||[])) onTick(d);
+    } else if(m.t === 'stats'){
+      statGap = m.seq_gaps; statDrop = m.dropped;
+    }
+  };
+}
+function paintConn(){
+  $('dot').className = 'dot ' + (connected ? 'on' : 'off');
+  $('connTxt').textContent = connected ? 'connected' : 'disconnected';
+  $('btn').textContent = connected ? 'Disconnect' : 'Connect';
+}
+
+/* ---------- tick handling ---------- */
+function onTick(d){
+  let o = sym.get(d.s);
+  if(!o){ o = {bid:d.b, ask:d.a, ms:d.ms, count:0, hist:[], prev:d.b}; sym.set(d.s, o); }
+  o.prev = o.bid; o.bid = d.b; o.ask = d.a; o.ms = d.ms; o.count++;
+  o.hist.push(d.b); if(o.hist.length > SPARK) o.hist.shift();
+  secTicks++; total++;
+}
+
+/* ---------- one-second aggregation ---------- */
+setInterval(() => {
+  buckets++;
+  const p99 = pct(secLat, .99), p50 = pct(secLat, .50);
+  // The opening seconds include connect-time snapshot work and the browser's
+  // first paint; they are outliers that would otherwise set the chart's scale.
+  if(buckets > 3){
+    rateSeries.push(secTicks); if(rateSeries.length > MAXPTS) rateSeries.shift();
+    latSeries.push(isNaN(p99) ? 0 : p99); if(latSeries.length > MAXPTS) latSeries.shift();
+  }
+
+  $('k-rate').textContent  = secTicks.toLocaleString();
+  $('k-total').textContent = total.toLocaleString() + ' total';
+  $('k-lat').textContent   = isNaN(p50) ? '—' : p50.toFixed(2);
+  $('k-lat99').textContent = isNaN(p99) ? '—' : p99.toFixed(2);
+  $('k-batch').textContent = frames ? (secTicks/Math.max(frames,1)).toFixed(1) : '—';
+  $('k-gap').textContent   = statGap + ' / ' + statDrop;
+
+  secTicks = 0; frames = 0; secLat = [];
+  drawLine($('cRate'), rateSeries, css('--series-1'), v => v.toFixed(0) + ' ticks');
+  drawLine($('cLat'),  latSeries,  css('--series-2'), v => v.toFixed(2) + ' ms');
+}, 1000);
+
+function pct(a,p){ if(!a.length) return NaN; const s=[...a].sort((x,y)=>x-y);
+  return s[Math.min(s.length-1, Math.floor(s.length*p))]; }
+
+/* ---------- tiles ---------- */
+setInterval(() => {
+  const host = $('tiles');
+  for(const [s, o] of [...sym.entries()].sort()){
+    let el = document.getElementById('t_'+s);
+    if(!el){
+      el = document.createElement('div');
+      el.className = 'tile'; el.id = 't_'+s;
+      el.innerHTML = `<div class="sym"></div>
+        <div class="row"><span class="px"></span><span class="chg"></span></div>
+        <div class="meta"><span class="ask"></span><span class="spr"></span><span class="cnt"></span></div>
+        <canvas></canvas>`;
+      host.appendChild(el);
+    }
+    const dg = digits(o.bid);
+    const up = o.bid > o.prev, dn = o.bid < o.prev;
+    el.querySelector('.sym').textContent = s;
+    el.querySelector('.px').textContent  = o.bid.toFixed(dg);
+    const chg = el.querySelector('.chg');
+    chg.className = 'chg ' + (up ? 'up' : dn ? 'dn' : '');
+    chg.textContent = (up ? '▲ ' : dn ? '▼ ' : '– ') + (o.bid - o.prev).toFixed(dg);
+    el.querySelector('.ask').textContent = 'Ask ' + o.ask.toFixed(dg);
+    el.querySelector('.spr').textContent = 'Spread ' + (o.ask - o.bid).toFixed(dg);
+    el.querySelector('.cnt').textContent = o.count.toLocaleString() + ' ticks';
+    drawSpark(el.querySelector('canvas'), o.hist);
+  }
+  if($('tableCard').style.display === 'block') drawTable();
+}, 250);
+
+function digits(v){ return v >= 1000 ? 2 : v >= 50 ? 3 : 5; }
+
+function drawTable(){
+  $('tbody').innerHTML = [...sym.entries()].sort().map(([s,o]) => {
+    const dg = digits(o.bid);
+    const dir = o.bid > o.prev ? '\u25b2 up' : o.bid < o.prev ? '\u25bc down' : '\u2013 flat';
+    return `<tr><td>${s}</td><td>${o.bid.toFixed(dg)}</td><td>${o.ask.toFixed(dg)}</td>
+      <td>${(o.ask-o.bid).toFixed(dg)}</td><td>${dir}</td>
+      <td>${o.count.toLocaleString()}</td>
+      <td>${new Date(o.ms).toISOString().substr(11,12)}</td></tr>`;
+  }).join('');
+}
+
+/* ---------- drawing helpers ---------- */
+function fit(cv){
+  const r = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  if(cv.width !== w*r || cv.height !== h*r){ cv.width = w*r; cv.height = h*r; }
+  const c = cv.getContext('2d'); c.setTransform(r,0,0,r,0,0); c.clearRect(0,0,w,h);
+  return {c, w, h};
+}
+
+function drawSpark(cv, data){
+  const {c,w,h} = fit(cv);
+  if(data.length < 2) return;
+  const mn = Math.min(...data), mx = Math.max(...data), rg = (mx-mn) || 1;
+  const x = i => i/(data.length-1)*w, y = v => h-2 - (v-mn)/rg*(h-4);
+  const col = data[data.length-1] >= data[0] ? css('--good') : css('--critical');
+  c.beginPath(); c.moveTo(0, h);
+  data.forEach((v,i) => c.lineTo(x(i), y(v)));
+  c.lineTo(w, h); c.closePath();
+  c.fillStyle = col + '1f'; c.fill();
+  c.beginPath(); data.forEach((v,i) => i ? c.lineTo(x(i), y(v)) : c.moveTo(x(i), y(v)));
+  c.strokeStyle = col; c.lineWidth = 2; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke();
+}
+
+const charts = new Map();
+function drawLine(cv, data, color, fmt){
+  const {c,w,h} = fit(cv);
+  const PL = 38, PR = 6, PT = 8, PB = 16;
+  const iw = w-PL-PR, ih = h-PT-PB;
+  const mx = Math.max(1, ...data);
+  const x = i => PL + (data.length<2 ? iw : i/(data.length-1)*iw);
+  const y = v => PT + ih - (v/mx)*ih;
+
+  c.strokeStyle = css('--grid'); c.lineWidth = 1; c.fillStyle = css('--text-muted');
+  c.font = '10px ui-sans-serif,sans-serif'; c.textAlign = 'right'; c.textBaseline = 'middle';
+  for(let i=0;i<=2;i++){
+    const v = mx*i/2, yy = Math.round(y(v))+.5;
+    c.beginPath(); c.moveTo(PL, yy); c.lineTo(w-PR, yy); c.stroke();
+    c.fillText(v >= 100 ? v.toFixed(0) : v.toFixed(1), PL-6, yy);
+  }
+  if(data.length < 2){ charts.set(cv.id, null); return; }
+
+  c.beginPath(); data.forEach((v,i) => i ? c.lineTo(x(i), y(v)) : c.moveTo(x(i), y(v)));
+  c.strokeStyle = color; c.lineWidth = 2; c.lineJoin = 'round'; c.stroke();
+
+  // Label only the latest point; a number on every point is noise.
+  const last = data[data.length-1];
+  c.beginPath(); c.arc(x(data.length-1), y(last), 3.5, 0, 7); c.fillStyle = color; c.fill();
+  c.strokeStyle = css('--surface-1'); c.lineWidth = 2; c.stroke();
+
+  c.fillStyle = css('--text-muted'); c.textAlign = 'left'; c.textBaseline = 'top';
+  c.fillText('-' + data.length + 's', PL, h-13);
+  c.textAlign = 'right'; c.fillText('now', w-PR, h-13);
+
+  charts.set(cv.id, {data, x, y, fmt, PL, iw});
+}
+
+/* ---------- hover tooltip ---------- */
+for(const id of ['cRate','cLat']){
+  const cv = $(id);
+  cv.addEventListener('mousemove', e => {
+    const st = charts.get(id); const tip = $('tip');
+    if(!st){ tip.style.opacity = 0; return; }
+    const r = cv.getBoundingClientRect();
+    const i = Math.round((e.clientX - r.left - st.PL) / st.iw * (st.data.length-1));
+    if(i < 0 || i >= st.data.length){ tip.style.opacity = 0; return; }
+    tip.textContent = `${st.data.length-1-i}s ago \u00b7 ${st.fmt(st.data[i])}`;
+    tip.style.left = (e.clientX + 12) + 'px';
+    tip.style.top  = (e.clientY - 30) + 'px';
+    tip.style.opacity = 1;
+  });
+  cv.addEventListener('mouseleave', () => { $('tip').style.opacity = 0; });
+}
+
+/* ---------- UI ---------- */
+$('btn').onclick = connect;
+$('tblBtn').onclick = () => {
+  const el = $('tableCard');
+  const on = el.style.display !== 'block';
+  el.style.display = on ? 'block' : 'none';
+  $('tblBtn').textContent = on ? 'Hide table' : 'Show table';
+  if(on) drawTable();
+};
+$('thm').onclick = () => {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const dark = cur ? cur === 'dark'
+    : matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+};
+paintConn();
+connect();
+})();
+</script>
+</body>
+</html>

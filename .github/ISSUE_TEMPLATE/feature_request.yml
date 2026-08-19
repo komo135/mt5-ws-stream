@@ -1,0 +1,36 @@
+name: Feature request
+description: Suggest a capability or a change in behaviour.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do that is hard or impossible today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: >
+        Including "a consumer could do this itself" — the bridge deliberately
+        stays a transport, so features that belong in a consumer are usually
+        better built there.
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: >
+            This is not order placement, storage, or indicator/bar computation —
+            see "What this project deliberately does not do" in docs/architecture.md.

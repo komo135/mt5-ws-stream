@@ -1,0 +1,55 @@
+name: Bug report
+description: Something does not work as documented.
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you ran, what you expected, what you got.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: >
+        Ideally using `mt5-ws-stream mock`, so it reproduces without a broker
+        account or a Windows machine.
+      placeholder: |
+        1. mt5-ws-stream bridge
+        2. mt5-ws-stream mock --rate 200
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Bridge log
+      description: Output of `mt5-ws-stream bridge -v`.
+      render: text
+
+  - type: textarea
+    id: mt5-logs
+    attributes:
+      label: MetaTrader Experts tab (if relevant)
+      description: Include the terminal build number.
+      render: text
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "`mt5-ws-stream --version`"
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: OS and Python version
+      placeholder: "Windows 11 / Python 3.12.4"
+    validations:
+      required: true
