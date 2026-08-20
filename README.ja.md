@@ -40,8 +40,8 @@ OpenAPI は同じポート。
 
 | | |
 | --- | --- |
-| Python | >= 3.11 |
-| 実行時依存 | `websockets>=13.0`, `fastapi>=0.115`, `uvicorn>=0.35` |
+| Python | >= 3.14 |
+| 実行時依存 | Python 3.14 対応版の websockets、AnyIO、FastAPI、Pydantic、Starlette、uvicorn |
 | ライブの市場データ | Windows 上の MetaTrader 5 |
 | EA のコンパイル | MetaEditor（端末に同梱） |
 

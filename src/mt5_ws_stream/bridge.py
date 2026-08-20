@@ -429,7 +429,7 @@ class Bridge:
                     prev_chunk_at = arrived_at
         except ProtocolError as exc:
             log.error("feeder %s speaks a different protocol (%s); dropping it", peer, exc)
-        except (ConnectionResetError, BrokenPipeError, asyncio.IncompleteReadError):
+        except ConnectionResetError, BrokenPipeError, asyncio.IncompleteReadError:
             pass
         except asyncio.CancelledError:
             raise

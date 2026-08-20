@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.14"
           cache: pip
           cache-dependency-path: pyproject.toml
       - run: pip install -e ".[dev]"
@@ -40,14 +40,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python: ["3.11", "3.12", "3.13"]
-        # The full matrix is 9 jobs for a project whose logic is OS-independent.
-        # Every Python on Linux, every OS on one Python, is the useful subset.
-        exclude:
-          - { os: windows-latest, python: "3.11" }
-          - { os: windows-latest, python: "3.13" }
-          - { os: macos-latest, python: "3.11" }
-          - { os: macos-latest, python: "3.13" }
+        python: ["3.14"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -59,7 +52,7 @@ jobs:
       - name: pytest
         run: pytest -v --cov=mt5_ws_stream --cov-report=xml --cov-report=term-missing
       - name: Upload coverage
-        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12'
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.14'
         uses: actions/upload-artifact@v4
         with:
           name: coverage
@@ -73,7 +66,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.14"
       - run: pip install build twine
       - run: python -m build
       - name: twine check

@@ -52,14 +52,14 @@ CI runs three jobs:
 
 | Job | Runs | Where |
 | --- | --- | --- |
-| lint & types | `ruff check`, `ruff format --check`, `mypy` | Ubuntu, Python 3.12 |
-| test | `pytest -v --cov=mt5_ws_stream --cov-report=xml --cov-report=term-missing` | Ubuntu on 3.11, 3.12 and 3.13; Windows and macOS on 3.12 |
-| build & verify package | `python -m build`, `twine check --strict`, then install the wheel into a fresh venv and run `mt5-ws-stream --version` and `mt5-ws-stream dashboard --print-path` | Ubuntu, Python 3.12 |
+| lint & types | `ruff check`, `ruff format --check`, `mypy` | Ubuntu, Python 3.14 |
+| test | `pytest -v --cov=mt5_ws_stream --cov-report=xml --cov-report=term-missing` | Ubuntu, Windows and macOS on Python 3.14 |
+| build & verify package | `python -m build`, `twine check --strict`, then install the wheel into a fresh venv and run `mt5-ws-stream --version` and `mt5-ws-stream dashboard --print-path` | Ubuntu, Python 3.14 |
 
 The test job passes no `-m` filter, so `slow` tests run in CI as well.
 
-Python 3.11 is the floor (`requires-python = ">=3.11"`): the WebSocket handler
-uses `asyncio.TaskGroup` and `except*`. `mypy` is configured with
+Python 3.14 is the supported floor (`requires-python = ">=3.14"`) and the CI target.
+`mypy` is configured with
 `files = ["src", "tests"]` and `strict = true`, so both trees have to stay clean
 under strict mode; `warn_unreachable` and the `ignore-without-code`,
 `redundant-expr` and `truthy-bool` error codes are on as well.
@@ -145,7 +145,7 @@ tick`) rather than requested as fixtures.
 
 `ruff format` decides formatting. Beyond that:
 
-* Line length is 96; quotes are double; the ruff target version is `py311`.
+* Line length is 96; quotes are double; the ruff target version is `py314`.
 * Public functions and classes get docstrings that say why, not only what.
 * Comments explain non-obvious decisions.
 * Keep `src/` and `tests/` clean under `mypy` strict mode.

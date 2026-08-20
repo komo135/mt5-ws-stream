@@ -149,7 +149,7 @@ class Session:
         """
         try:
             payload = json.loads(message)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             await self._sink.send(frames.error_frame("invalid json"))
             return
         if not isinstance(payload, dict):

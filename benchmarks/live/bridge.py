@@ -111,7 +111,7 @@ class BridgeProcess:
                 raise RuntimeError(f"bridge exited at once; see {self.log_path}")
             try:
                 http_get_json(self.api("health"), timeout=2.0)
-            except (urllib.error.URLError, OSError, ValueError):
+            except urllib.error.URLError, OSError, ValueError:
                 time.sleep(0.25)
             else:
                 # A health check can be answered by *someone else's* bridge: a

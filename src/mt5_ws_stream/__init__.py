@@ -44,7 +44,7 @@ from typing import TYPE_CHECKING, Any, Final
 # time (`from . import __version__`) to default `create_app`'s version argument,
 # and by then this module is only half-initialised. PEP 8 sanctions dunder
 # assignments ahead of imports for exactly this kind of case.
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 # `api` (FastAPI + pydantic) and `bridge` (uvicorn, and `api` itself) are the
 # server-side half of the package. A client-only process that only needs

@@ -7,9 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-08-20
+## [0.1.1] - 2026-08-20
 
 First public release.
+
+### Changed
+
+- **BREAKING:** Python 3.14 is now the minimum and the primary CI target. Package metadata,
+  linting, type checking, tests, build verification, and release builds all target Python 3.14.
+- Runtime and development dependency floors now require versions verified with Python 3.14;
+  `pydantic` is declared directly because the public API imports it directly.
+- Windows CLI startup now passes a selector loop factory directly instead of using the event-loop
+  policy APIs deprecated in Python 3.14.
 
 ### Added
 
@@ -270,5 +279,5 @@ of per-round medians; noise floor ±3%. Full tables and method in `docs/latency.
   `ws_ping_interval_s` / `ws_ping_timeout_s` are advisory. Dead peers are still caught by TCP and
   by the feeder's own heartbeat records, but not by a ping timeout on the consumer side.
 
-[Unreleased]: https://github.com/komo135/mt5-ws-stream/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/komo135/mt5-ws-stream/releases/tag/v0.1.0
+[Unreleased]: https://github.com/komo135/mt5-ws-stream/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/komo135/mt5-ws-stream/releases/tag/v0.1.1
