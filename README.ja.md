@@ -8,8 +8,8 @@
 
 <p align="center">
   <a href="https://github.com/komo135/mt5-ws-stream/actions/workflows/ci.yml"><img src="https://github.com/komo135/mt5-ws-stream/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://pypi.org/project/mt5-ws-stream/"><img src="https://img.shields.io/pypi/v/mt5-ws-stream.svg" alt="PyPI"></a>
-  <a href="https://pypi.org/project/mt5-ws-stream/"><img src="https://img.shields.io/pypi/pyversions/mt5-ws-stream.svg" alt="Python versions"></a>
+  <a href="https://pypi.org/project/mt5-ws-stream/"><img src="https://img.shields.io/pypi/v/mt5-ws-stream.svg?cacheSeconds=300" alt="PyPI"></a>
+  <a href="https://pypi.org/project/mt5-ws-stream/"><img src="https://img.shields.io/pypi/pyversions/mt5-ws-stream.svg?cacheSeconds=300" alt="Python versions"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
 </p>
 
