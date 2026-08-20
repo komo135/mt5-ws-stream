@@ -150,6 +150,56 @@ tick`) rather than requested as fixtures.
 * Comments explain non-obvious decisions.
 * Keep `src/` and `tests/` clean under `mypy` strict mode.
 
+## Releasing
+
+Merging to `main` publishes nothing. `main` is a branch that is always green,
+not a release channel. A release is a separate, deliberate act: an annotated
+`vX.Y.Z` tag, and a human pressing approve.
+
+The steps, in order:
+
+1. On a branch, bump `version` in `pyproject.toml` and turn the
+   `## [Unreleased]` heading in `CHANGELOG.md` into `## [X.Y.Z] - YYYY-MM-DD`,
+   with a fresh empty `## [Unreleased]` above it. Open it as a PR like any
+   other change and let CI go green.
+2. Merge it. Still nothing is published.
+3. Rehearse if the release path itself changed: run the **Release** workflow
+   from the Actions tab with `target: testpypi`. It walks the same guards, the
+   same CI, and the same Trusted Publishing exchange, against TestPyPI.
+4. Tag the merge commit and push the tag:
+
+   ```bash
+   git switch main && git pull
+   git tag -a v0.1.1 -m "v0.1.1"
+   git push origin v0.1.1
+   ```
+
+5. The **Release** workflow then, in order:
+   * checks the tag matches `pyproject.toml`, that the tagged commit is
+     reachable from `main`, and that `CHANGELOG.md` has a section for it;
+   * re-runs the whole CI workflow on the tagged tree -- lint, types, the test
+     matrix, and the wheel smoke test -- and publishes only the `dist/`
+     artifact that run produced;
+   * **waits for a reviewer on the `pypi` environment.** Nothing reaches PyPI
+     until someone approves the deployment;
+   * uploads to PyPI via Trusted Publishing, and only then cuts the GitHub
+     release.
+
+Any one of those failing stops the release with nothing published. A tag that
+turns out to be wrong before approval is cancelled by rejecting the deployment;
+after approval, PyPI is immutable -- yank and ship a new patch version.
+
+### One-time setup
+
+* **PyPI Trusted Publishing** must exist before the first upload. On
+  <https://pypi.org/manage/account/publishing/>, add a publisher with owner
+  `komo135`, repository `mt5-ws-stream`, workflow `release.yml`, environment
+  `pypi`. Repeat on <https://test.pypi.org> with environment `testpypi` if you
+  want the rehearsal in step 3.
+* **The `pypi` environment** needs a required reviewer, otherwise step 5's
+  approval gate is not a gate. Settings -> Environments -> `pypi` -> required
+  reviewers; and limit its deployment branches to tags matching `v*`.
+
 ## Reporting bugs
 
 Include:

@@ -1,0 +1,10 @@
+# Normalise every text file to LF in the repository, and check it out as LF.
+# Without this, a Windows-side editor touching the WSL checkout rewrites whole
+# files to CRLF and every commit carries a 16k-line whitespace diff.
+* text=auto eol=lf
+
+# Binary / generated: never touch.
+*.png binary
+*.jpg binary
+*.ico binary
+*.ex5 binary

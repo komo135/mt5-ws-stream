@@ -5,10 +5,15 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # Release calls this workflow, so a tag can only publish what CI has just
+  # proven green -- see .github/workflows/release.yml.
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Superseding a branch or PR run is free; superseding the CI half of a release
+  # run is not -- a tag builds exactly once.
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 env:
   FORCE_COLOR: "1"

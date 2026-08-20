@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Release pipeline** — a `v*` tag no longer publishes on its own. The Release
+  workflow now checks the tag against `pyproject.toml`, refuses a tag that is
+  not reachable from `main`, requires a `CHANGELOG.md` section for the version,
+  re-runs the whole CI workflow on the tagged tree, and publishes the artifact
+  that run produced only after a reviewer approves the `pypi` environment.
+  `workflow_dispatch` rehearses the same path against TestPyPI.
+- CI is callable as a reusable workflow (`workflow_call`), so release and
+  branch builds run exactly the same checks.
+
+### Fixed
+
+- Added `.gitattributes` (`* text=auto eol=lf`) so a Windows-side editor
+  touching the checkout no longer rewrites every file to CRLF.
+- Dependabot now groups `actions/upload-artifact` and `actions/download-artifact`
+  into one PR, so a major bump cannot land on one half of the CI-to-Release
+  artifact handoff at a time.
+
 ## [0.1.0] - 2026-08-20
 
 First public release.

@@ -13,3 +13,9 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    groups:
+      # upload-artifact and download-artifact should move together: CI uploads
+      # `dist` and Release downloads it, so a lone major bump on either side
+      # changes one half of that handoff.
+      artifact-actions:
+        patterns: ["actions/upload-artifact", "actions/download-artifact"]
