@@ -88,7 +88,7 @@ FRAME_TAG: Final[str] = "t"
 PROTOCOL_VERSION: Final[int] = 1
 
 
-class FrameKind(str, enum.Enum):
+class FrameKind(enum.StrEnum):
     """The kinds of frame a bridge sends. The value is the ``t`` tag.
 
     A :class:`str` enum so a comparison against a decoded tag

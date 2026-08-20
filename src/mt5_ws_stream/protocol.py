@@ -370,7 +370,7 @@ def percentile(sorted_samples: Sequence[float], p: float) -> float | None:
     return sorted_samples[min(len(sorted_samples) - 1, int(len(sorted_samples) * p))]
 
 
-class PayloadFormat(str, enum.Enum):
+class PayloadFormat(enum.StrEnum):
     """How a subscriber wants its ticks encoded.
 
     Shared vocabulary between client and server: the client sets it on the
@@ -400,7 +400,7 @@ class PayloadFormat(str, enum.Enum):
         return cls.BINARY if value.lower().startswith("b") else cls.JSON
 
 
-class BackpressurePolicy(str, enum.Enum):
+class BackpressurePolicy(enum.StrEnum):
     """What to do when a subscriber cannot keep up.
 
     Shared vocabulary between client and server: the client requests a policy,
