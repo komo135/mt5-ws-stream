@@ -94,10 +94,12 @@ That is `http://127.0.0.1:8765/dashboard`, served by the bridge.
 import asyncio
 from mt5_ws_stream import TickStreamClient
 
+
 async def main() -> None:
     async with TickStreamClient(symbols=["EURUSD", "USDJPY"]) as stream:
         async for tick in stream:
             print(f"{tick.symbol} {tick.bid} / {tick.ask}  spread={tick.spread:.5f}")
+
 
 asyncio.run(main())
 ```
