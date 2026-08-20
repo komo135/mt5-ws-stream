@@ -60,7 +60,7 @@ jobs:
         run: pytest -v --cov=mt5_ws_stream --cov-report=xml --cov-report=term-missing
       - name: Upload coverage
         if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: coverage.xml
@@ -86,7 +86,7 @@ jobs:
           /tmp/fresh/bin/pip install dist/*.whl
           /tmp/fresh/bin/mt5-ws-stream --version
           /tmp/fresh/bin/mt5-ws-stream dashboard --print-path
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/

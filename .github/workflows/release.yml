@@ -27,7 +27,7 @@ jobs:
             echo "::error::tag $TAG does not match pyproject version $PKG"
             exit 1
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
