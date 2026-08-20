@@ -50,6 +50,6 @@ body:
     id: environment
     attributes:
       label: OS and Python version
-      placeholder: "Windows 11 / Python 3.12.4"
+      placeholder: "Windows 11 / Python 3.14.3"
     validations:
       required: true

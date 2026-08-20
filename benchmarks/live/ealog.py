@@ -198,7 +198,7 @@ class StatsLine:
         """One field as an integer, or *default* if absent or not a number."""
         try:
             return int(self.values[key])
-        except (KeyError, ValueError):
+        except KeyError, ValueError:
             return default
 
     @property

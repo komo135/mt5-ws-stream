@@ -40,8 +40,8 @@ one port.
 
 | | |
 | --- | --- |
-| Python | >= 3.11 |
-| Runtime dependencies | `websockets>=13.0`, `fastapi>=0.115`, `uvicorn>=0.35` |
+| Python | >= 3.14 |
+| Runtime dependencies | Python 3.14-compatible releases of websockets, AnyIO, FastAPI, Pydantic, Starlette and uvicorn |
 | Live market data | MetaTrader 5 on Windows |
 | Compiling the EA | MetaEditor (ships with the terminal) |
 

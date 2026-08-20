@@ -397,7 +397,7 @@ def bridge_is_up(base_url: str) -> bool:
     try:
         with urllib.request.urlopen(request, timeout=_HEALTH_TIMEOUT_S) as response:
             return bool(response.status == 200)
-    except (urllib.error.URLError, OSError, ValueError):
+    except urllib.error.URLError, OSError, ValueError:
         return False
 
 
@@ -611,12 +611,14 @@ def print_bench(result: BenchResult) -> None:
 
 def _run(coro: object) -> None:
     if os.name == "nt":
-        # The Proactor loop does not support add_signal_handler, and the selector
-        # loop is the better fit for many small sockets anyway.
-        asyncio.set_event_loop_policy(
-            asyncio.WindowsSelectorEventLoopPolicy()  # type: ignore[attr-defined,unused-ignore]
+        # Event-loop policies are deprecated in Python 3.14. Pass the selector
+        # loop directly; it remains the better fit for many small sockets.
+        asyncio.run(
+            coro,  # type: ignore[arg-type]
+            loop_factory=asyncio.SelectorEventLoop,
         )
-    asyncio.run(coro)  # type: ignore[arg-type,unused-ignore]
+        return
+    asyncio.run(coro)  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":  # pragma: no cover
